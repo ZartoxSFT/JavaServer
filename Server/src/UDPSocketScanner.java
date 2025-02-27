@@ -1,8 +1,11 @@
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UDPSocketScanner {
     private static final byte[] EMPTY_PACKET = new byte[0];
+    public static List<Integer> availablePorts = new ArrayList<>();
 
     /**
      * Méthode qui va itérer sur les ports de startPort à endPort et appeler scanUDPPort pour chaque port
@@ -29,6 +32,7 @@ public class UDPSocketScanner {
     private static void scanUDPPort(int port, String host) throws SocketException, UnknownHostException {
         DatagramSocket socket = null;
         try{
+            
             socket = new DatagramSocket(port);
             InetAddress address = InetAddress.getByName(host);
             socket.setSoTimeout(2000);
@@ -37,6 +41,7 @@ public class UDPSocketScanner {
             socket.send(packet);
 
             System.out.println("Port disponible: " + port + " sur " + host);
+            availablePorts.add(port);
         } catch (UnknownHostException e) {
 
             System.out.println("Host inconnu : " + host);
