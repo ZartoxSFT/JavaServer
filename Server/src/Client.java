@@ -22,10 +22,11 @@ public class Client {
         
         System.out.print("Entrez le port du serveur: ");
         int serverPort = scanner.nextInt();
+        scanner.nextLine(); // Consommer la nouvelle ligne
         
         // Initialiser le client avec les informations saisies
         Client client = new Client(nom, serverIP, serverPort);
-        client.run();
+        client.run(scanner);
         
         scanner.close();
     }
@@ -36,33 +37,49 @@ public class Client {
         this.serverPort = serverPort;
     }
 
-    public void run(){
-        DatagramSocket broadCastSock = null;
+    public void run(Scanner scanner){
+        final DatagramSocket socket;
         try{   
-            broadCastSock = new DatagramSocket();
+            socket = new DatagramSocket();
             InetAddress servInetAddress = InetAddress.getByName(serverIP);
 
             byte[] receivedData = new byte[1024];
-            byte[] sendData = ("hello serveur RX302").getBytes();
+            byte[] sendData = Server.serverMsg.getBytes(); // Envoi du message exact attendu par le serveur
 
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, servInetAddress, serverPort);
-            broadCastSock.send(sendPacket);
+            socket.send(sendPacket);
             System.out.println("Message envoyé au serveur.");
 
             DatagramPacket receivePacket = new DatagramPacket(receivedData, receivedData.length);
-            broadCastSock.receive(receivePacket);
+            socket.receive(receivePacket);
 
             String response = new String(receivePacket.getData(), 0, receivePacket.getLength());
-            InetAddress serverIP = receivePacket.getAddress();
-            int serverPort = receivePacket.getPort();
+            System.out.println("Réponse du serveur : " + response);
 
-            System.out.println("Réponse du serveur : " + response + " de @" + serverIP.getHostAddress() + " : " + serverPort);
+            // Démarrer un thread pour recevoir les messages
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        socket.receive(receivePacket);
+                        String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
+                        System.out.println("Message reçu : " + message);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+            // Boucle pour envoyer des messages
+            while (true) {
+                System.out.print("Entrez un message à envoyer : ");
+                String message = scanner.nextLine();
+                sendData = (nom + ": " + message).getBytes();
+                sendPacket = new DatagramPacket(sendData, sendData.length, servInetAddress, serverPort);
+                socket.send(sendPacket);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (broadCastSock != null && !broadCastSock.isClosed()) {
-                broadCastSock.close();
-            }
-        }
+        } 
     }
 }
