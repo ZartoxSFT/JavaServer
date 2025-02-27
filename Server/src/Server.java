@@ -16,10 +16,11 @@ public class Server {
 
     public static void main(String args[]) {
         try {
-            UDPSocketScanner.scanUDPPorts(1, 200, serverIP); // On scanne les ports de 1 à 200
+            UDPSocketScanner.scanUDPPorts(1, 200, serverIP);
             Server server = new Server();
             server.run();
-        } catch (SocketException | UnknownHostException e) {
+        } catch (SocketException e) {
+        } catch (UnknownHostException e) {
             e.printStackTrace();
             System.exit(-1);
         }
