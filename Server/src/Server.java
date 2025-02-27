@@ -15,36 +15,30 @@ public class Server {
     public static final String serverResponse = "Serveur RX302 ready";
     public static List<Integer> availablePorts = new ArrayList<>();
 
-
-
-    public static void main(String args[]) throws SocketException,UnknownHostException {
-        UDPSocketScanner.scanUDPPorts(1,200 , serverIP);
+    public static void main(String args[]) throws SocketException, UnknownHostException {
+        UDPSocketScanner.scanUDPPorts(1, 200, serverIP);
         Server server = new Server();
         server.run();
-
-    } 
-
-    public Server(){
-        
     }
 
+    public Server(){}
 
     private void run(){
-        //setName("Server thread");
         DatagramSocket broadCastSock = null;
         try{
-            
             int serverPort = -1;
             for (int result : UDPSocketScanner.availablePorts) {
-                    serverPort = result;
-                    freeport = result;
-                    break;
-                }
+                serverPort = result;
+                freeport = result;
+                break;
+            }
 
             if (serverPort == -1) {
                 System.out.println("Aucun port disponible dans la plage spécifiée.");
                 return;
             }
+
+            System.out.println("Serveur en écoute sur le port : " + serverPort);
 
             broadCastSock = new DatagramSocket(null);
             InetSocketAddress address = new InetSocketAddress(serverIP, serverPort);
@@ -52,45 +46,42 @@ public class Server {
             byte[] receivedData = new byte[1024];
             userPrint("Java_Server...");
 
-
             while(true){
                 DatagramPacket receivePacket = new DatagramPacket(receivedData, receivedData.length);
                 broadCastSock.receive(receivePacket);
                 
                 String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
-                InetAddress clientAdress = receivePacket.getAddress();
+                InetAddress clientAddress = receivePacket.getAddress();
                 int clientPort = receivePacket.getPort();
 
+                userPrint("Message reçu : " + message + " de " + clientAddress.getHostAddress() + ":" + clientPort);
+
                 if(message.equals(serverMsg)){
-                    userPrint("Nouveau client : " + clientAdress.getHostAddress() + " : " + clientPort);
+                    userPrint("Nouveau client : " + clientAddress.getHostAddress() + " : " + clientPort);
                     
                     byte[] sendData = serverResponse.getBytes();
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAdress, clientPort);
+                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
                     broadCastSock.send(sendPacket);
+                    userPrint("Réponse envoyée au client.");
+                } else {
+                    userPrint("Message inattendu reçu : " + message);
                 }
-
             }
-
-            
-
-        }catch(BindException e) {
-			userPrint("Port du socket déja attribué, un serveur tourne probablement en arriére plan");
-			System.exit(-1);;
-		}
-		catch(Exception e) {
-			userPrint("Impossible de créer le socket");
-			e.printStackTrace();
-			System.exit(-1);;
-		}
-        finally{
+        } catch(BindException e) {
+            userPrint("Port du socket déjà attribué, un serveur tourne probablement en arrière-plan");
+            System.exit(-1);
+        } catch(Exception e) {
+            userPrint("Impossible de créer le socket");
+            e.printStackTrace();
+            System.exit(-1);
+        } finally{
             if (broadCastSock != null && !broadCastSock.isClosed()) {
                 broadCastSock.close();
             }
         }
     }
 
-
     public static void userPrint(String text) {
-		System.out.println(text);
-	}
+        System.out.println(text);
+    }
 }
