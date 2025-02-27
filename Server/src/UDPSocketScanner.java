@@ -27,7 +27,9 @@ public class UDPSocketScanner {
      * @throws IOException
      */
     private static void scanUDPPort(int port, String host) throws SocketException, UnknownHostException {
-        try (DatagramSocket socket = new DatagramSocket(port)) {
+        DatagramSocket socket = null;
+        try{
+            socket = new DatagramSocket(port);
             InetAddress address = InetAddress.getByName(host);
             socket.setSoTimeout(2000);
 
@@ -43,6 +45,10 @@ public class UDPSocketScanner {
             System.out.println("Port indisponible: " + port + " sur " + host);
         } catch (IOException e) {
             System.out.println("Port indisponible: " + port + " sur " + host);
+        }finally {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
         }
     }
 }
