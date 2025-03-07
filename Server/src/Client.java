@@ -1,4 +1,12 @@
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOError;
+import java.io.IOException;
 import java.net.DatagramPacket;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -9,22 +17,29 @@ public class Client {
     private String nom;
     private String serverIP;
     private int serverPort;
+    private InetAddress servInetAddress;
+    private UDPIO udpio = new UDPIO();
+    private DataOutputStream sendStream = udpio.getOutput();
+    private DataInputStream receiveStream = udpio.getInput();
+
+
+
     
     public static void main(String[] args) throws SocketException, UnknownHostException {
         Scanner scanner = new Scanner(System.in);
+        
 
-        // Demander les informations à l'utilisateur
-        System.out.print("Entrez votre nom: ");
+
+        System.out.print("Entrez votre nom : ");
         String nom = scanner.nextLine();
         
-        System.out.print("Entrez l'adresse IP du serveur: ");
+        System.out.print("Entrez l'adresse IP du serveur : ");
         String serverIP = scanner.nextLine();
         
-        System.out.print("Entrez le port du serveur: ");
+        System.out.print("Entrez le port du serveur : ");
         int serverPort = scanner.nextInt();
-        scanner.nextLine(); // Consommer la nouvelle ligne
+        scanner.nextLine(); 
         
-        // Initialiser le client avec les informations saisies
         Client client = new Client(nom, serverIP, serverPort);
         client.run(scanner);
         
@@ -35,33 +50,37 @@ public class Client {
         this.nom = nom;
         this.serverIP = serverIP;
         this.serverPort = serverPort;
+        
+        try{
+            servInetAddress = InetAddress.getByName(serverIP);  
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+       
     }
 
     public void run(Scanner scanner){
-        final DatagramSocket socket;
         try{   
-            socket = new DatagramSocket();
-            InetAddress servInetAddress = InetAddress.getByName(serverIP);
+            sendStream.writeUTF(Server.serverMsg);
+            sendStream.writeUTF(nom);
 
-            byte[] receivedData = new byte[1024];
-            byte[] sendData = Server.serverMsg.getBytes(); // Envoi du message exact attendu par le serveur
+            udpio.sendData(this.servInetAddress,this.serverPort);
 
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, servInetAddress, serverPort);
-            socket.send(sendPacket);
             System.out.println("Message envoyé au serveur.");
 
-            DatagramPacket receivePacket = new DatagramPacket(receivedData, receivedData.length);
-            socket.receive(receivePacket);
+           
 
-            String response = new String(receivePacket.getData(), 0, receivePacket.getLength());
+            udpio.receiveData();
+            String response = receiveStream.readUTF();
+
             System.out.println("Réponse du serveur : " + response);
 
-            // Démarrer un thread pour recevoir les messages
             new Thread(() -> {
                 try {
                     while (true) {
-                        socket.receive(receivePacket);
-                        String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
+                        udpio.receiveData();
+                        String message = receiveStream.readUTF();
                         System.out.println("Message reçu : " + message);
                     }
                 } catch (Exception e) {
@@ -69,17 +88,18 @@ public class Client {
                 }
             }).start();
 
-            // Boucle pour envoyer des messages
             while (true) {
+                
                 System.out.print("Entrez un message à envoyer : ");
                 String message = scanner.nextLine();
-                sendData = (nom + ": " + message).getBytes();
-                sendPacket = new DatagramPacket(sendData, sendData.length, servInetAddress, serverPort);
-                socket.send(sendPacket);
+                sendStream.writeUTF(message);
+                udpio.sendData(this.servInetAddress,this.serverPort);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         } 
     }
+
+   
 }

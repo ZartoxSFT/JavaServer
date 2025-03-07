@@ -1,9 +1,14 @@
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOError;
+import java.io.IOException;
 import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.net.UnknownHostException;
@@ -12,7 +17,14 @@ public class Server {
     public static final String serverIP = "127.0.0.1";
     public static final String serverMsg = "hello serveur RX302";
     public static final String serverResponse = "Serveur RX302 ready";
-    private Set<ClientInfo> clients = new HashSet<>();
+    
+    private ArrayList<ClientInfo> clients = new ArrayList<>();
+    
+    private UDPIO udpio = new UDPIO();
+    private DataOutputStream sendStream = udpio.getOutput();
+    private DataInputStream receiveStream = udpio.getInput();
+
+    
 
     public static void main(String args[]) {
         try {
@@ -29,7 +41,7 @@ public class Server {
     public Server() {}
 
     private void run() {
-        final DatagramSocket socket;
+        DatagramSocket socket = udpio.getSocket();
         try {
             int serverPort = -1;
             for (int port : UDPSocketScanner.availablePorts) {
@@ -44,32 +56,67 @@ public class Server {
 
             System.out.println("Serveur en écoute sur le port : " + serverPort);
 
-            socket = new DatagramSocket(null);
             InetSocketAddress address = new InetSocketAddress(serverIP, serverPort);
             socket.bind(address);
-            byte[] receivedData = new byte[1024];
             userPrint("Java_Server en écoute...");
 
             while (true) {
-                DatagramPacket receivePacket = new DatagramPacket(receivedData, receivedData.length);
-                socket.receive(receivePacket);
+               udpio.receiveData();
 
-                String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
-                InetAddress clientAddress = receivePacket.getAddress();
-                int clientPort = receivePacket.getPort();
-
-                userPrint("Message reçu : " + message + " de " + clientAddress.getHostAddress() + ":" + clientPort);
-
-                if (message.startsWith(serverMsg)) {
-                    userPrint("Nouveau client : " + clientAddress.getHostAddress() + " : " + clientPort);
-                    clients.add(new ClientInfo(clientAddress, clientPort));
-                    byte[] sendData = serverResponse.getBytes();
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
-                    socket.send(sendPacket);
-                    userPrint("Réponse envoyée au client.");
-                } else {
-                    relayMessageToClients(socket, message, clientAddress, clientPort);
+                String message, name;
+                int clientPort;
+                InetAddress clientAddress;
+                try{
+                     message = receiveStream.readUTF();
+                     clientAddress = udpio.getReceivePacket().getAddress();
+                     clientPort = udpio.getReceivePacket().getPort();
+                }catch(Exception e){
+                    e.printStackTrace();
+                    continue;
                 }
+               
+                 ClientInfo clientinfo = getUser(clientAddress, clientPort);
+                 if(clientinfo != null){
+                    userPrint(clientinfo.name + " : "  + message);
+                 }
+                
+                try{
+                    if (message.startsWith(serverMsg)) {
+                        userPrint("Nouveau client : " + clientAddress.getHostAddress() + " : " + clientPort);
+                        name = receiveStream.readUTF();
+                        clients.add(new ClientInfo(clientAddress, clientPort, name));
+                        sendStream.writeUTF(serverResponse);
+                        udpio.sendData(clientAddress, clientPort);
+                        userPrint("Réponse envoyée au client.");
+                        
+                    } else if(message.charAt(0) ==  '/'){
+                        String suce = message.substring(1,message.indexOf(" "));
+                        switch (suce) {
+                            case "msg":
+                                String[] parts = message.split(" ", 3);
+                                String targetName = parts[1];
+                                String msg = parts[2];
+                                for (ClientInfo client : clients) {
+                                    if (client.name.equals(targetName)) {
+                                        sendStream.writeUTF(msg);
+                                        udpio.sendData(client.getAddress(), client.getPort());
+                                        break;
+                                    }
+                                }
+                                
+                                break;
+                        
+                            default:
+                                break;
+                        }
+                    } else {
+                        relayMessageToClients(socket, message, clientAddress, clientPort);
+                    } 
+                } catch (Exception e) {
+                    continue;
+                }
+
+              
             }
         } catch (BindException e) {
             userPrint("Port du socket déjà attribué, un serveur tourne probablement en arrière-plan");
@@ -81,16 +128,13 @@ public class Server {
         }
     }
 
-    private void relayMessageToClients(DatagramSocket socket, String message, InetAddress senderAddress, int senderPort) {
+    private void relayMessageToClients(DatagramSocket socket, String message, InetAddress senderAddress, int senderPort)throws IOException {
+
         for (ClientInfo client : clients) {
             if (!client.getAddress().equals(senderAddress) || client.getPort() != senderPort) {
-                try {
-                    byte[] sendData = message.getBytes();
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, client.getAddress(), client.getPort());
-                    socket.send(sendPacket);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                    sendStream.writeUTF(message);
+                    udpio.sendData(senderAddress, senderPort);
+
             }
         }
     }
@@ -99,13 +143,25 @@ public class Server {
         System.out.println(text);
     }
 
+    
+    public ClientInfo getUser(InetAddress address, int port){
+        for(ClientInfo client : clients){
+            if(client.getAddress().equals(address) && client.getPort() == port){
+                return client;
+            }
+        }
+        return null;
+    }
+
     private static class ClientInfo {
         private final InetAddress address;
         private final int port;
+        private final String name;
 
-        public ClientInfo(InetAddress address, int port) {
+        public ClientInfo(InetAddress address, int port, String name) {
             this.address = address;
             this.port = port;
+            this.name = name;
         }
 
         public InetAddress getAddress() {
