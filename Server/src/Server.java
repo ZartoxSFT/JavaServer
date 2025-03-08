@@ -76,7 +76,7 @@ public class Server {
                 }
                
                  ClientInfo clientinfo = getUser(clientAddress, clientPort);
-                 if(clientinfo != null){
+                 if(clientinfo != null && message.charAt(0) !=  '/'){
                     userPrint(clientinfo.name + " : "  + message);
                  }
                 
@@ -90,8 +90,7 @@ public class Server {
                         userPrint("Réponse envoyée au client.");
                         
                     } else if(message.charAt(0) ==  '/'){
-                        String suce = message.substring(1,message.indexOf(" "));
-                        switch (suce) {
+                        switch (message.substring(1,message.indexOf(" "))) {
                             case "msg":
                                 String[] parts = message.split(" ", 3);
                                 String targetName = parts[1];
