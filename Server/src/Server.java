@@ -55,7 +55,7 @@ public class Server {
             }
         
 
-            serverPort = 12345; // Pour tester
+            // serverPort = 12345; // Pour tester
 
             userPrint("Serveur en écoute sur le port : " + serverPort);
 
