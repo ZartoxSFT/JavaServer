@@ -65,23 +65,46 @@ public class Client {
             sendStream.writeUTF(Server.serverMsg);
             sendStream.writeUTF(nom);
 
+            
+
             udpio.sendData(this.servInetAddress,this.serverPort);
 
-            System.out.println("Message envoyé au serveur.");
+            Server.userPrint("Connexion au serveur...");
 
            
+            udpio.getSocket().setSoTimeout(2000);
+            try{
+                udpio.receiveData();
+                String response = receiveStream.readUTF();
+                Server.userPrint("Réponse du serveur : " + response);
+            }
+            catch(Exception e){
+                Server.userPrint("Impossible de se connecter au serveur.");
+                System.exit(0);
+            }
 
-            udpio.receiveData();
-            String response = receiveStream.readUTF();
-
-            System.out.println("Réponse du serveur : " + response);
+            udpio.getSocket().setSoTimeout(0);
 
             new Thread(() -> {
                 try {
                     while (true) {
+                        
                         udpio.receiveData();
-                        String message = receiveStream.readUTF();
-                        System.out.println("Message reçu : " + message);
+                        switch (receiveStream.readByte()) {
+                            case 1:
+                            String message = receiveStream.readUTF();
+                            Server.userPrint("Message reçu : " + message);
+                                break;
+
+                            case 0x7F:
+                                Server.userPrint("Le serveur a fermé la connexion.");
+                                System.exit(0);
+                                break;
+                        
+                            default:
+                                break;
+                        }
+                      
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -93,6 +116,7 @@ public class Client {
                 System.out.print("Entrez un message à envoyer : ");
                 String message = scanner.nextLine();
                 sendStream.writeUTF(message);
+                
                 udpio.sendData(this.servInetAddress,this.serverPort);
             }
 
