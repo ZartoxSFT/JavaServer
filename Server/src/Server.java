@@ -38,8 +38,14 @@ public class Server {
         }
     }
 
+    /**
+     * Constructeur de la classe Server
+     */
     public Server() {}
 
+    /**
+     * Méthode qui exécute le serveur Java
+     */
     private void run() {
         DatagramSocket socket = udpio.getSocket();
         try {
@@ -114,7 +120,7 @@ public class Server {
                                 for (ClientInfo client : clients) {
                                     if (client.name.equals(targetName)) {
                                         sendStream.writeByte(1);
-                                        sendStream.writeUTF("Message reçu de " + getUser(clientAddress, clientPort).name + " : " + msg);
+                                        sendStream.writeUTF("Message reçu de " + getUser(clientAddress, clientPort).name + " : " + msg + "\n" + "Entrez un message à envoyer :");
                                         udpio.sendData(client.getAddress(), client.getPort());
                                         break;
                                     }
@@ -143,6 +149,14 @@ public class Server {
         }
     }
 
+    /**
+     * Méthode qui relaie un message à tous les clients connectés
+     * @param socket
+     * @param message
+     * @param senderAddress
+     * @param senderPort
+     * @throws IOException
+     */
     private void relayMessageToClients(DatagramSocket socket, String message, InetAddress senderAddress, int senderPort)throws IOException {
 
         for (ClientInfo client : clients) {
@@ -155,11 +169,20 @@ public class Server {
         }
     }
 
+    /**
+     * Méthode qui affiche un message à l'utilisateur 
+     * @param text
+     */
     public static void userPrint(String text) {
         System.out.println(text);
     }
 
-    
+    /**
+     * Méthode qui retourne un client en fonction de son adresse et de son port
+     * @param address
+     * @param port
+     * @return
+     */
     public ClientInfo getUser(InetAddress address, int port){
         for(ClientInfo client : clients){
             if(client.getAddress().equals(address) && client.getPort() == port){
@@ -174,16 +197,31 @@ public class Server {
         private final int port;
         private final String name;
 
+        /**
+         * Constructeur de la classe ClientInfo
+         * @param address
+         * @param port
+         * @param name
+         */
         public ClientInfo(InetAddress address, int port, String name) {
             this.address = address;
             this.port = port;
             this.name = name;
         }
 
+        /**
+         * Méthode qui retourne le nom du client
+         * 
+         * @return
+         */
         public InetAddress getAddress() {
             return address;
         }
 
+        /**
+         * Méthode qui retourne le port du client
+         * @return
+         */
         public int getPort() {
             return port;
         }

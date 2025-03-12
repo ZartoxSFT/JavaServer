@@ -60,6 +60,10 @@ public class Client {
        
     }
 
+    /**
+     * Méthode qui permet de lancer le client et de communiquer avec le serveur
+     * @param scanner
+     */
     public void run(Scanner scanner){
         try{   
             sendStream.writeUTF(Server.serverMsg);
