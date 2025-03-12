@@ -55,7 +55,7 @@ public class Server {
             }
         
 
-            // serverPort = 12345; // Pour tester
+           // serverPort = 12345; // Pour tester en ligne
 
             userPrint("Serveur en écoute sur le port : " + serverPort);
 
@@ -114,12 +114,11 @@ public class Server {
                                 for (ClientInfo client : clients) {
                                     if (client.name.equals(targetName)) {
                                         sendStream.writeByte(1);
-                                        sendStream.writeUTF(msg);
+                                        sendStream.writeUTF("Message reçu de " + getUser(clientAddress, clientPort).name + " : " + msg);
                                         udpio.sendData(client.getAddress(), client.getPort());
                                         break;
                                     }
                                 }
-                                
                                 break;
                         
                             default:
@@ -147,9 +146,9 @@ public class Server {
     private void relayMessageToClients(DatagramSocket socket, String message, InetAddress senderAddress, int senderPort)throws IOException {
 
         for (ClientInfo client : clients) {
-            if (!client.getAddress().equals(senderAddress) && client.getPort() != senderPort) {
+            if (!client.getAddress().equals(senderAddress) || client.getPort() != senderPort) {
                     sendStream.writeByte(1);
-                    sendStream.writeUTF(message);
+                    sendStream.writeUTF(getUser(senderAddress, senderPort).name + " : " + message);
                     udpio.sendData(client.getAddress(), client.getPort());
 
             }

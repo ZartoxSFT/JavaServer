@@ -93,7 +93,7 @@ public class Client {
                         switch (receiveStream.readByte()) {
                             case 1:
                             String message = receiveStream.readUTF();
-                            Server.userPrint("Message reçu de " + message);
+                            Server.userPrint(message);
                                 break;
 
                             case 0x7F:
@@ -113,7 +113,8 @@ public class Client {
 
             while (true) {
                 
-                System.out.print("Entrez un message à envoyer : ");
+                System.out.print("Entrez un message à envoyer : \n" + //
+                                        "");
                 String message = scanner.nextLine();
                 sendStream.writeUTF(message);
                 
