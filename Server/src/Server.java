@@ -192,6 +192,9 @@ public class Server {
         return null;
     }
 
+    /**
+     * Classe qui permet de scanner les ports UDP
+     */
     private static class ClientInfo {
         private final InetAddress address;
         private final int port;
@@ -211,7 +214,6 @@ public class Server {
 
         /**
          * Méthode qui retourne le nom du client
-         * 
          * @return
          */
         public InetAddress getAddress() {

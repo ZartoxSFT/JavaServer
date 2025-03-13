@@ -46,6 +46,12 @@ public class Client {
         scanner.close();
     }
 
+    /**
+     * Constructeur de la classe Client
+     * @param nom
+     * @param serverIP
+     * @param serverPort
+     */
     public Client(String nom, String serverIP, int serverPort){
         this.nom = nom;
         this.serverIP = serverIP;
