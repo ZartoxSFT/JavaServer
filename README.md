@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Ce projet consiste à créer un serveur en Java. Il contient plusieurs fichiers et répertoires qui sont nécessaires pour le bon fonctionnement du serveur. Ce guide vous expliquera comment configurer et exécuter ce serveur.
+Ce projet consiste à créer un serveur en Java. Il contient plusieurs fichiers et répertoires qui sont nécessaires pour le bon fonctionnement du serveur. Ce guide vous expliquera comment configurer et exécuter ce serveur, ainsi que fournir une explication des méthodes principales et du fonctionnement des classes.
 
 ## Structure du projet
 
@@ -67,37 +67,48 @@ Pour exécuter le client, utilisez la classe `Client.java`. Vous pouvez le faire
 java Server/src/Client
 ```
 
-## Description des classes Java
+## Description des classes et méthodes principales
 
 ### Client.java
 
-Cette classe gère la logique du client qui se connecte au serveur. Voici comment cela fonctionne concrètement :
+#### Fonctionnement
 
-1. Le client demande à l'utilisateur d'entrer son nom, l'adresse IP du serveur et le port du serveur.
-2. Il initialise une connexion avec le serveur en utilisant les informations fournies.
-3. Le client envoie un message de connexion au serveur et attend une réponse.
-4. Une fois connecté, le client peut envoyer des messages au serveur, qui seront relayés aux autres clients connectés.
-5. Le client écoute également les messages entrants du serveur et les affiche.
+La classe `Client` gère la logique du client qui se connecte au serveur. Elle permet à l'utilisateur de se connecter à un serveur en spécifiant son nom, l'adresse IP du serveur et le port. Une fois connecté, le client peut envoyer et recevoir des messages du serveur.
+
+#### Méthodes principales :
+
+- `Client(String nom, String serverIP, int serverPort)`: Constructeur qui initialise le client avec un nom, une adresse IP de serveur et un port.
+- `void run(Scanner scanner)`: Méthode qui lance le client et communique avec le serveur. Elle envoie le nom du client au serveur et écoute les messages entrants.
 
 ### Server.java
 
-Cette classe gère la logique du serveur. Voici comment cela fonctionne concrètement :
+#### Fonctionnement
 
-1. Le serveur initialise un socket UDP et écoute les connexions entrantes sur un port spécifié.
-2. Lorsqu'un client se connecte, le serveur enregistre les informations du client (adresse, port, nom).
-3. Le serveur écoute les messages des clients et les relaye aux autres clients connectés.
-4. Le serveur peut également envoyer des messages spécifiques à un client.
-5. Lors de la fermeture du serveur, il envoie un message de déconnexion à tous les clients connectés.
+La classe `Server` gère la logique du serveur. Elle initialise un socket UDP, écoute les connexions entrantes des clients, et relaie les messages entre les clients connectés. Le serveur peut également envoyer des messages spécifiques à un client.
+
+#### Méthodes principales :
+
+- `Server()`: Constructeur de la classe Server.
+- `void run()`: Méthode qui exécute le serveur Java. Elle initialise le socket UDP, écoute les connexions entrantes, et relaie les messages aux clients connectés.
+- `void relayMessageToClients(DatagramSocket socket, String message, InetAddress senderAddress, int senderPort)`: Méthode qui relaie un message à tous les clients connectés.
+- `ClientInfo getUser(InetAddress address, int port)`: Méthode qui retourne un client en fonction de son adresse et de son port.
 
 ### UDPIO.java
 
-Cette classe gère les entrées/sorties UDP. Voici comment cela fonctionne concrètement :
+#### Fonctionnement
 
-1. La classe initialise un socket UDP pour envoyer et recevoir des paquets de données.
-2. Elle fournit des méthodes pour envoyer des données à une adresse et un port spécifiés.
-3. Elle fournit des méthodes pour recevoir des données d'un client.
-4. Elle retourne les flux de données d'entrée et de sortie pour faciliter la lecture et l'écriture des données.
+La classe `UDPIO` gère les entrées/sorties UDP. Elle fournit des méthodes pour envoyer et recevoir des paquets de données UDP, et facilite la lecture et l'écriture des données via des flux de données.
+
+#### Méthodes principales :
+
+- `UDPIO()`: Constructeur qui initialise le socket UDP.
+- `void sendData(InetAddress address, int port)`: Méthode qui envoie des données à une adresse et un port spécifiés.
+- `void receiveData()`: Méthode qui reçoit des données d'un client.
+- `DataInputStream getInput()`: Méthode qui retourne le flux de sortie de données.
+- `DataOutputStream getOutput()`: Méthode qui retourne le flux d'entrée de données.
+- `DatagramSocket getSocket()`: Méthode qui retourne le socket de la classe.
+- `DatagramPacket getReceivePacket()`: Méthode qui retourne le paquet reçu par le socket.
 
 ## Conclusion
 
-Ce guide vous a expliqué comment configurer et exécuter le serveur Java. Si vous avez des questions ou des problèmes, n'hésitez pas à consulter la documentation ou à ouvrir une issue sur le dépôt GitHub.
+Ce guide vous a expliqué comment configurer et exécuter le serveur Java, ainsi que le fonctionnement des différentes classes et leurs méthodes principales. Si vous avez des questions ou des problèmes, n'hésitez pas à consulter la documentation ou à ouvrir une issue sur le dépôt GitHub.
