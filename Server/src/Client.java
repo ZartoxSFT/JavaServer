@@ -71,8 +71,10 @@ public class Client {
      * @param scanner
      */
     public void run(Scanner scanner){
-        try{   
+        try{ 
+            sendStream.writeByte(1);
             sendStream.writeUTF(Server.serverMsg);
+            sendStream.writeByte(1);
             sendStream.writeUTF(nom);
 
             
@@ -92,6 +94,16 @@ public class Client {
                 Server.userPrint("Impossible de se connecter au serveur.");
                 System.exit(0);
             }
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                       sendStream.writeByte(0x7F);
+                       udpio.sendData(this.servInetAddress,this.serverPort);
+                   } catch (IOException e) {
+                       e.printStackTrace();
+                   }
+               
+           }));
 
             udpio.getSocket().setSoTimeout(0);
 
@@ -121,13 +133,14 @@ public class Client {
                 }
             }).start();
 
+
             while (true) {
                 
                 System.out.print("Entrez un message à envoyer : \n" + //
                                         "");
                 String message = scanner.nextLine();
+                sendStream.writeByte(1);
                 sendStream.writeUTF(message);
-                
                 udpio.sendData(this.servInetAddress,this.serverPort);
             }
 

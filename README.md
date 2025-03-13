@@ -4,6 +4,19 @@
 
 Ce projet consiste à créer un serveur en Java en s'inspirant des serveurs Minecraft. Il contient plusieurs fichiers et répertoires qui sont nécessaires pour le bon fonctionnement du serveur. Ce guide vous expliquera comment configurer et exécuter ce serveur, ainsi que fournir une explication des méthodes principales et du fonctionnement des classes.
 
+## Implementations
+
+### Commandes :
+
+- Ecrire directement un message pour l'envoyer a tout les clients.
+
+- /msg (Nom du déstinataire) (Message)
+    Permets d'envoyer un message privé a un destinaitaire.
+
+- /all clients
+    Permets d'afficher la liste des clients qui sont connecté au serveur.
+
+
 ## Description des classes et méthodes principales
 
 ### Client.java
@@ -33,6 +46,7 @@ La classe `Server` gère la logique du serveur. Elle initialise un socket UDP, �
 ### UDPIO.java
 
 #### Fonctionnement
+
 
 La classe `UDPIO` gère les entrées/sorties UDP. Elle fournit des méthodes pour envoyer et recevoir des paquets de données UDP, et facilite la lecture et l'écriture des données via des flux de données.
 
