@@ -84,7 +84,7 @@ public class Server {
                 int clientPort = udpio.getReceivePacket().getPort();
                 switch (receiveStream.readByte()) {
                     case 1:
-                        new Thread(new ClientHandler(clientAddress, clientPort, socket)).start();
+                        treatMessage(socket, clientAddress, clientPort);
                     break;
 
                     case 0x7F:
@@ -97,6 +97,7 @@ public class Server {
                         break;
                 }
             }
+
         } catch (BindException e) {
             userPrint("Port du socket déjà attribué, un serveur tourne probablement en arrière-plan");
             System.exit(-1);
@@ -104,6 +105,68 @@ public class Server {
             userPrint("Impossible de créer le socket");
             e.printStackTrace();
             System.exit(-1);
+        }
+    }
+
+    /**
+     * Méthode qui traite un message reçu par le serveur
+     * @param socket
+     * @param clientAddress
+     * @param clientPort
+     */
+    public void treatMessage(DatagramSocket socket, InetAddress clientAddress, int clientPort) {
+        try {
+            String message = receiveStream.readUTF();
+            ClientInfo clientInfo = getUser(clientAddress, clientPort);
+            if (clientInfo != null && message.charAt(0) != '/') {
+                userPrint(clientInfo.name + " : " + message);
+            }
+            if (message.startsWith(serverMsg)) {
+                receiveStream.readByte();
+                String name = receiveStream.readUTF();
+                clients.add(new ClientInfo(clientAddress, clientPort, name));
+                userPrint(name + " s'est connecté sur le port : " + clientPort);
+                sendStream.writeUTF(serverResponse);
+                udpio.sendData(clientAddress, clientPort);
+                userPrint("Réponse envoyée au client.");
+            } else if (message.charAt(0) == '/') {
+                switch (message.substring(1, message.indexOf(" "))) {
+                    case "msg":
+                        String[] parts = message.split(" ", 3);
+                        String targetName = parts[1];
+                        String msg = parts[2];
+                        for (ClientInfo client : clients) {
+                            if (client.name.equals(targetName)) {
+                                sendStream.writeByte(1);
+                                sendStream.writeUTF("Message reçu de " + getUser(clientAddress, clientPort).name + " : " + msg + "\n" + "Entrez un message à envoyer :");
+                                udpio.sendData(client.getAddress(), client.getPort());
+                                break;
+                            }
+                        }
+
+                    case "all":
+                    String[] partsclient = message.split(" ", 2);
+                    String allclients = partsclient[1];
+                    if (allclients.equals("clients")) {
+                        for (ClientInfo client : clients) {
+                                sendStream.writeByte(1);
+                                sendStream.writeUTF(getUser(client.getAddress(), client.getPort()).name);
+                                udpio.sendData(clientAddress, clientPort);
+                         }
+                        sendStream.writeByte(1);
+                        sendStream.writeUTF("Entrez un message à envoyer :");
+                        udpio.sendData(clientAddress, clientPort);
+
+                        }                               
+            break;
+                    default:
+                        break;
+                }
+            } else {
+                relayMessageToClients(socket, message, clientAddress, clientPort);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -197,79 +260,6 @@ public class Server {
         @Override
         public int hashCode() {
             return address.hashCode() + port;
-        }
-    }
-
-    /**
-     * Classe qui gère les clients
-     */
-    private class ClientHandler implements Runnable {
-        private InetAddress clientAddress;
-        private int clientPort;
-    
-        private DatagramSocket socket;
-
-        public ClientHandler(InetAddress clientAddress, int clientPort, DatagramSocket socket) {
-            this.socket = socket;
-            this.clientAddress = clientAddress;
-            this.clientPort = clientPort;
-        }
-    
-        @Override
-        public void run() {
-            try {
-                String message = receiveStream.readUTF();
-                ClientInfo clientInfo = getUser(clientAddress, clientPort);
-                if (clientInfo != null && message.charAt(0) != '/') {
-                    userPrint(clientInfo.name + " : " + message);
-                }
-                if (message.startsWith(serverMsg)) {
-                    receiveStream.readByte();
-                    String name = receiveStream.readUTF();
-                    clients.add(new ClientInfo(clientAddress, clientPort, name));
-                    userPrint(name + " s'est connecté sur le port : " + clientPort);
-                    sendStream.writeUTF(serverResponse);
-                    udpio.sendData(clientAddress, clientPort);
-                    userPrint("Réponse envoyée au client.");
-                } else if (message.charAt(0) == '/') {
-                    switch (message.substring(1, message.indexOf(" "))) {
-                        case "msg":
-                            String[] parts = message.split(" ", 3);
-                            String targetName = parts[1];
-                            String msg = parts[2];
-                            for (ClientInfo client : clients) {
-                                if (client.name.equals(targetName)) {
-                                    sendStream.writeByte(1);
-                                    sendStream.writeUTF("Message reçu de " + getUser(clientAddress, clientPort).name + " : " + msg + "\n" + "Entrez un message à envoyer :");
-                                    udpio.sendData(client.getAddress(), client.getPort());
-                                    break;
-                                }
-                            }
-
-                        case "all":
-                        String[] partsclient = message.split(" ", 2);
-                        String allclients = partsclient[1];
-                        if (allclients.equals("clients")) {
-                            for (ClientInfo client : clients) {
-                                    sendStream.writeByte(1);
-                                    sendStream.writeUTF(getUser(client.getAddress(), client.getPort()).name);
-                                    udpio.sendData(clientAddress, clientPort);
-                             }
-                            sendStream.writeByte(1);
-                            sendStream.writeUTF("Entrez un message à envoyer :");
-                            udpio.sendData(clientAddress, clientPort);
-
-                            }                               
-                break;
-                        default:
-                            break;
-                    }
-                } else {
-                    relayMessageToClients(socket, message, clientAddress, clientPort);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 }
