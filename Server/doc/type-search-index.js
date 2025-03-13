@@ -1,1 +1,0 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"<Unnamed>","l":"Client"},{"p":"<Unnamed>","l":"Server"},{"p":"<Unnamed>","l":"UDPIO"},{"p":"<Unnamed>","l":"UDPSocketScanner"}];updateSearchResults();
