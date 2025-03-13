@@ -1,3 +1,4 @@
+
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOError;
@@ -72,15 +73,11 @@ public class Client {
      */
     public void run(Scanner scanner){
         try{ 
-            sendStream.writeByte(1);
             sendStream.writeUTF(Server.serverMsg);
-            sendStream.writeByte(1);
             sendStream.writeUTF(nom);
-
-            
-
             udpio.sendData(this.servInetAddress,this.serverPort);
-
+            
+            
             Server.userPrint("Connexion au serveur...");
 
            
@@ -89,6 +86,7 @@ public class Client {
                 udpio.receiveData();
                 String response = receiveStream.readUTF();
                 Server.userPrint("Réponse du serveur : " + response);
+                serverPort = receiveStream.readShort();
             }
             catch(Exception e){
                 Server.userPrint("Impossible de se connecter au serveur.");
@@ -114,9 +112,9 @@ public class Client {
                         udpio.receiveData();
                         switch (receiveStream.readByte()) {
                             case 1:
-                            String message = receiveStream.readUTF();
-                            Server.userPrint(message);
-                                break;
+                            	String message = receiveStream.readUTF();
+                            	Server.userPrint(message);
+                            	break;
 
                             case 0x7F:
                                 Server.userPrint("Le serveur a fermé la connexion.");
@@ -133,15 +131,26 @@ public class Client {
                 }
             }).start();
 
-
+            String lastmsg = "";
             while (true) {
-                
-                System.out.print("Entrez un message à envoyer : \n" + //
-                                        "");
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (lastmsg != "/all"){
+                    System.out.print("Entrez un message à envoyer : \n" + //
+                    "");
+                }
+               
                 String message = scanner.nextLine();
                 sendStream.writeByte(1);
                 sendStream.writeUTF(message);
                 udpio.sendData(this.servInetAddress,this.serverPort);
+                if(message.length() >= 4){
+                    lastmsg = message.substring(0, 4);
+                }
+        
             }
 
         } catch (Exception e) {
