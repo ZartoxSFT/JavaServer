@@ -187,6 +187,9 @@ public class Server {
         }
     }
 
+    /**
+     * Classe qui gère les clients
+     */
     private class ClientHandler implements Runnable {
         private InetAddress clientAddress;
         private int clientPort;
